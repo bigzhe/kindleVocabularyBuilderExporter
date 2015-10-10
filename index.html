@@ -36,6 +36,18 @@
 
         </div>
 
+
+        <div ng-if="stages[3]">
+          &nbsp;
+          <p>
+            <h5>对该书单词进行翻译或导出</h5>
+
+            <li>点击进行翻译后，程序会调用 有道翻译API 对下方列出的所有单词进行翻译</li>
+            <li>点击导出数据后，程序会把下方单词的数据导出成文本显示在导出结果的文本框里面</li>
+          </p>
+          <br>
+        </div>
+
         <div ng-if="stages[0] && stages[1] && stages[2] && stages[3]">
 
           <table class="table">
@@ -43,9 +55,10 @@
             <button class="btn btn-primary" type="button" name="button" ng-click="translate()">点击进行翻译</button>
             &nbsp;
             <button class="btn btn-success" type="button" name="button" ng-click="export()">点击导出数据</button>
-            <br><br>
-            <label><input type="checkbox" ng-model="filter.original">
-              是否进行单词翻译筛选，翻译中如果有与单词重复的出现将被删除（如 人名，...的复数 等）
+            <br>
+            <br>
+            <label>
+              <input type="checkbox" ng-model="filter.original" ng-init="filter.original=true"> 是否进行单词翻译筛选，翻译中如果有与单词重复的出现将被删除（如 人名，...的复数 等）
             </label>
             <hr>
             <div class="form-group">
@@ -76,22 +89,28 @@
 
       <div ng-if="stages[0] && !stages[1] && !stages[2] && !stages[3]">
         <p>
-          Stage 0: 帮助文字
+          kindle 的数据库文件vocab.db包含有所有单词，它的位置在
+          <li>Mac: /Volumes/Kindle/system/vocabulary/vocab.db</li>
+
+          <li>Windows: 待补充</li>
+          <br> 由于vocab.db这个文件是隐藏文件，需要把文件夹显示隐藏文件的功能打开。具体方法可以参考文章： 苹果Mac操作系统下怎么显示隐藏文件
         </p>
       </div>
 
       <div ng-if="stages[1] && !stages[2] && !stages[3]">
         <p>
-          Stage 1: 帮助文字
+          从下拉菜单选择
         </p>
       </div>
 
       <div ng-if="stages[2] && !stages[3]">
         &nbsp;
         <p>
-          Stage 2: 帮助文字
+          如果已经成功配置好 有道翻译API，那么这里应该显示刚刚填写的 key 和 keyfrom
+          <br> 如果没有配置好，请重新配置 有道翻译API 并刷新页面
         </p>
       </div>
+
 
 
 
@@ -111,8 +130,8 @@
 
 
       // 请在此输入 Youdao API
-      var key = '在此输入key';
-      var keyfrom = '在此输入keyfrom';
+      var key = '2131628321';
+      var keyfrom = 'kindle-exporter';
 
 
       // ------------------------------------------------
@@ -204,7 +223,7 @@
             if (value.length > 1) {
               for (var i = 0; i < value[1].translation.length; i++) {
                 var explain = value[1].translation[i];
-                if ($scope.filterOriginal) {
+                if ($scope.filter.original) {
                   if (word.length > 3 && explain.toLowerCase().indexOf(word.toLowerCase().slice(0, 3)) > -1) {
                     explain = 'deleted';
                   }
