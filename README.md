@@ -3,8 +3,6 @@ kindleVocabularyBuilderExporter 读取 kindle 中 Vocabulary Builder 的内容�
 
 ![](img/finish.png)
 
-<img src="img/phone.jpg" width="200">
-
 ## 基本功能
 
 - 读取 kindle 数据文件
