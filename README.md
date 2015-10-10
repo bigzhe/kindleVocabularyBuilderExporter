@@ -88,6 +88,8 @@ Windows: `待补充`
 
 #### 导入`vocab.db`文件
 
+用Chrome打开`index.html`
+
 ![loadfile](img/load_file.png)
 
 #### 选择要导出的书籍
