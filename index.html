@@ -104,6 +104,7 @@
 
     <script>
       var url = 'http://fanyi.youdao.com/openapi.do'
+
       // ------------------------------------------------
       // ------------------------------------------------
       // ------------------------------------------------
@@ -186,14 +187,6 @@
               var result = response.data;
               if (result.hasOwnProperty('basic')) {
                 if (result.basic.hasOwnProperty('explains')) {
-                  // if ($scope.filterOriginal) {
-                  //   for (var i = 0; i < result.basic.explains.length; i++) {
-                  //     var explain = result.basic.explains[i];
-                  //     if (word.length > 3 && explain.toLowerCase().indexOf(word.toLowerCase().slice(0, 3)) > -1) {
-                  //       result.basic.explains[i] = undefined;
-                  //     }
-                  //   }
-                  // }
                   $scope.words[word].push({
                     'translation': result.basic.explains
                   });
