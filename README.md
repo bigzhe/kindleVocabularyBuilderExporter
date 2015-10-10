@@ -1,6 +1,10 @@
 # kindleVocabularyBuilderExporter
 kindleVocabularyBuilderExporter 读取 kindle 中 Vocabulary Builder 的内容，利用 有道翻译API 进行翻译，并对单词进行格式化的导出，方便上传到 Quizlet 进行复习。
 
+![](img/finish.png)
+
+<!-- <img src="img/phone.jpg" width="200"> -->
+
 ## 基本功能
 
 - 读取 kindle 数据文件
