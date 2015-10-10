@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Kindle Voc Exporter</title>
+  <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <h2>Kindle VocabularyBuilder Exporter</h2>
+
+    <label class="button">请选择导入kindle的数据文件
+      <input type='file' custom-on-change="uploadFile" id='dbfile'>
+    </label>
+    <hr>
+    <div ng-app="myApp" ng-controller="myCtrl">
+
+      <div ng-if="stages[0] && stages[1]">
+        <div class="form-group">
+          <label for="name">{{books_info}}</label>
+          <select class="form-control" ng-model="data.bookSelect" ng-change="change(data.bookSelect)" ng-options="title as title[1] for title in titles">
+            <option value="">---请选择书籍---</option>
+          </select>
+        </div>
+
+        <div ng-if="stages[0] && stages[1] && stages[2]">
+          <legend>有道API</legend>
+          <ul>
+            <li>key: {{key}}</li>
+            <li>keyfrom: {{keyfrom}}</li>
+          </ul>
+          <br>
+          <button class="btn btn-success" type="button" name="button" ng-if="stages[2] && !stages[3]" ng-click="apiUpdate()">确认API</button>
+
+        </div>
+
+        <div ng-if="stages[0] && stages[1] && stages[2] && stages[3]">
+
+          <table class="table">
+            <h4><i>{{data.bookSelect[1]}}</i> 共{{word_num}}个单词</h4>
+            <button class="btn btn-primary" type="button" name="button" ng-click="translate()">点击进行翻译</button>
+            &nbsp;
+            <button class="btn btn-success" type="button" name="button" ng-click="export()">点击导出数据</button>
+            <br><br>
+            <label><input type="checkbox" ng-model="filter.original">
+              是否进行单词翻译筛选，翻译中如果有与单词重复的出现将被删除（如 人名，...的复数 等）
+            </label>
+            <hr>
+            <div class="form-group">
+              <label for="name">导出结果('Ctrl/Cmd + A'进行全选)</label>
+              <textarea class="form-control" rows="5" ng-model="exportText"></textarea>
+            </div>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>单词</th>
+                <th>出处</th>
+                <th>翻译</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="(k, v) in words">
+                <td>{{$index+1}}</td>
+                <td>{{k}}</td>
+                <td>{{v[0].usage}}</td>
+                <td>
+                  <li ng-repeat="t in v[1].translation">{{t}}</li>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div ng-if="stages[0] && !stages[1] && !stages[2] && !stages[3]">
+        <p>
+          Stage 0: 帮助文字
+        </p>
+      </div>
+
+      <div ng-if="stages[1] && !stages[2] && !stages[3]">
+        <p>
+          Stage 1: 帮助文字
+        </p>
+      </div>
+
+      <div ng-if="stages[2] && !stages[3]">
+        &nbsp;
+        <p>
+          Stage 2: 帮助文字
+        </p>
+      </div>
+
+
+
+    </div>
+
+    <script src="js/sql.js" charset="utf-8"></script>
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="bower_components/angular/angular.min.js"></script>
+
+    <script>
+      var url = 'http://fanyi.youdao.com/openapi.do'
+      var key = '142703595';
+      var keyfrom = 'haozhezhang';
+      var app = angular.module('myApp', []);
+      app.factory('translationService', function($http) {
+        return {
+          getTranslation: function(word) {
+            return $http.get(url + '?keyfrom=' + keyfrom + '&key=' + key + '&type=data&doctype=json&version=1.1&q=' + word);
+          }
+        };
+      });
+      app.controller('myCtrl', function($scope, translationService) {
+
+        $scope.key = key;
+        $scope.keyfrom = keyfrom;
+        // stage 0: waiting for database file
+        // stage 1: waiting for book selection
+        // stage 2: waiting for Youdao API
+        // stage 3: translate/export
+        $scope.stages = [true, false, false, false];
+        $scope.books_info = "请先导入数据文件";
+        $scope.filter = {};
+        $scope.filter.original = true;
+
+        $scope.apiUpdate = function() {
+          $scope.stages[3] = true;
+        }
+
+        var dbFileElm = document.getElementById('dbfile');
+        var db = null;
+
+        dbFileElm.onchange = function() {
+          var f = dbFileElm.files[0];
+          var r = new FileReader();
+          r.onload = function() {
+            var Uints = new Uint8Array(r.result);
+            db = new SQL.Database(Uints);
+            var contents = db.exec("SELECT id, title FROM book_info");
+            $scope.titles = contents[0].values;
+            $scope.books_info = "您有" + contents[0].values.length + "本书籍，请选择要导出的书籍";
+            $scope.contents = contents;
+            $scope.stages[1] = true;
+            $scope.$apply();
+          }
+          r.readAsArrayBuffer(f);
+        }
+
+        $scope.change = function(book) {
+          $scope.stages[2] = true;
+          var sql = "SELECT word_key, usage FROM lookups WHERE book_key='" + book[0] + "'";
+          var contents = db.exec(sql);
+          $scope.word_num = contents[0].values.length;
+          $scope.words = {};
+          for (var i = 0; i < contents[0].values.length; i++) {
+            var word = contents[0].values[i];
+            $scope.words[word[0].slice(3)] = [];
+            $scope.words[word[0].slice(3)].push({
+              'usage': word[1]
+            });
+          }
+        }
+
+        $scope.translate = function() {
+          angular.forEach($scope.words, function(usage, word) {
+            translationService.getTranslation(word).then(function(response) {
+              var result = response.data;
+              if (result.hasOwnProperty('basic')) {
+                if (result.basic.hasOwnProperty('explains')) {
+                  // if ($scope.filterOriginal) {
+                  //   for (var i = 0; i < result.basic.explains.length; i++) {
+                  //     var explain = result.basic.explains[i];
+                  //     if (word.length > 3 && explain.toLowerCase().indexOf(word.toLowerCase().slice(0, 3)) > -1) {
+                  //       result.basic.explains[i] = undefined;
+                  //     }
+                  //   }
+                  // }
+                  $scope.words[word].push({
+                    'translation': result.basic.explains
+                  });
+                }
+              }
+            });
+          });
+        }
+
+        $scope.export = function() {
+          $scope.exportText = "";
+          angular.forEach($scope.words, function(value, word) {
+            $scope.exportText += word;
+            $scope.exportText += '\t';
+            if (value.length > 1) {
+              for (var i = 0; i < value[1].translation.length; i++) {
+                var explain = value[1].translation[i];
+                if ($scope.filterOriginal) {
+                  if (word.length > 3 && explain.toLowerCase().indexOf(word.toLowerCase().slice(0, 3)) > -1) {
+                    explain = 'deleted';
+                  }
+                }
+                $scope.exportText += explain + '\n';
+              }
+            }
+            $scope.exportText += '\n';
+            $scope.exportText += value[0].usage + '\n\n\n';
+          });
+        }
+
+      });
+    </script>
+
+
+</body>
+
+</html>
